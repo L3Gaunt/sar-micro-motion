@@ -85,7 +85,41 @@ def process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size
         logger.error(f"Error in sub-aperture processing: {str(e)}")
         return None
 
-def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step=64, upsample_factor=200):
+def extract_sub_aperture(range_doppler, start, sub_ap_width, device=None):
+    """Helper function to extract a sub-aperture with bounds checking using PyTorch.
+    
+    Args:
+        range_doppler (np.ndarray or torch.Tensor): Range-Doppler spectrum.
+        start (int): Starting index for the sub-aperture.
+        sub_ap_width (int): Width of the sub-aperture.
+        device (torch.device): Device to use for computation (default: None).
+    
+    Returns:
+        torch.Tensor: Extracted sub-aperture amplitude image.
+    """
+    # Convert to torch tensor if not already
+    if not isinstance(range_doppler, torch.Tensor):
+        if device is None:
+            device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+        range_doppler = torch.tensor(range_doppler, device=device, dtype=torch.complex64)
+    
+    with torch.no_grad():
+        n_az = range_doppler.shape[1]
+        if start + sub_ap_width > n_az:
+            start = n_az - sub_ap_width
+        end = start + sub_ap_width
+        
+        # Create mask for current sub-aperture
+        mask = torch.zeros_like(range_doppler)
+        mask[:, start:end] = range_doppler[:, start:end]
+        
+        # Generate sub-aperture image
+        sub_ap_image = torch.fft.ifft(mask, dim=1)
+        amplitude = torch.abs(sub_ap_image)
+        
+    return amplitude
+
+def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step=64, upsample_factor=200, batch_size=16):
     """
     Generate sub-apertures and compute sub-pixel shifts using a sliding master strategy.
     
@@ -95,6 +129,7 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
         patch_size (tuple): Patch size for coregistration.
         step (int): Step size for patch extraction.
         upsample_factor (int): Oversampling factor for sub-pixel accuracy.
+        batch_size (int): Number of patches to process in each mini-batch.
     
     Returns:
         np.ndarray: Accumulated sub-pixel shifts over time.
@@ -103,39 +138,51 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
     logger.info(f"Starting sub-aperture processing with {M} sub-apertures")
     log_memory_usage("Before sub-aperture processing")
     
-    # Compute range-Doppler transform
-    range_doppler = np.fft.fft(sicd_data, axis=1)
+    # Setup device
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+    
+    # Compute range-Doppler transform in PyTorch
+    with torch.no_grad():
+        sicd_tensor = torch.tensor(sicd_data, device=device, dtype=torch.complex64)
+        range_doppler = torch.fft.fft(sicd_tensor, dim=1)
+        del sicd_tensor  # Free memory
+    
     n_az = sicd_data.shape[1]
     sub_ap_width = n_az // M
     step_size = sub_ap_width // 2  # Overlap for sliding strategy
     
-    # Initialize shifts array
-    shifts = np.zeros((M-1, sicd_data.shape[0] // step, sicd_data.shape[1] // step, 2))
+    # Extract first master sub-aperture
+    master = extract_sub_aperture(range_doppler, start=0, sub_ap_width=sub_ap_width, device=device)
+    master_np = master.cpu().numpy()
+    del master  # Free GPU memory
     
-    # Process consecutive sub-aperture pairs
+    # Initialize shifts array (we'll set dimensions after first processing)
+    shifts = None
+    
+    # Process all sub-aperture pairs
     for t in tqdm(range(M-1), desc="Processing sub-aperture pairs"):
-        # Master sub-aperture
-        mask_master = np.zeros_like(range_doppler, dtype=complex)
-        start_master = t * step_size
-        end_master = start_master + sub_ap_width
-        mask_master[:, start_master:end_master] = range_doppler[:, start_master:end_master]
-        master_image = np.fft.ifft(mask_master, axis=1)
-        master = np.abs(master_image)
+        # Extract slave sub-aperture (which will become the next master)
+        slave = extract_sub_aperture(range_doppler, start=(t+1)*step_size, sub_ap_width=sub_ap_width, device=device)
+        slave_np = slave.cpu().numpy()
         
-        # Slave sub-aperture
-        mask_slave = np.zeros_like(range_doppler, dtype=complex)
-        start_slave = (t + 1) * step_size
-        end_slave = start_slave + sub_ap_width
-        mask_slave[:, start_slave:end_slave] = range_doppler[:, start_slave:end_slave]
-        slave_image = np.fft.ifft(mask_slave, axis=1)
-        slave = np.abs(slave_image)
+        # Compute sub-pixel shifts
+        result = process_sub_aperture_mps(master_np, slave_np, patch_size, step, upsample_factor, batch_size=batch_size)
         
-        # Compute sub-pixel shifts using MPS
-        result = process_sub_aperture_mps(master, slave, patch_size, step, upsample_factor)
+        # Initialize shifts array if first iteration
+        if shifts is None:
+            result_shape = result.shape
+            logger.info(f"Result shape: {result_shape}")
+            shifts = np.zeros((M-1, *result_shape))
+        
+        # Store result
         shifts[t] = result
         
-        # Free memory
-        del mask_master, mask_slave, master_image, slave_image, master, slave
+        # Reuse slave as master for next iteration
+        master_np = slave_np
+        del slave  # Free GPU memory
+    
+    # Free large tensor
+    del range_doppler
     
     # Accumulate shifts over time
     total_shifts = np.cumsum(shifts, axis=0)
@@ -337,23 +384,25 @@ def sub_pixel_shift(corr, shift_int, upsample_factor=200):
     """
     device = corr.device
     x, y = shift_int
-    corr_np = corr.cpu().numpy()
     
-    # Define fine grid for interpolation
-    x_vals = np.linspace(-1, 1, upsample_factor)
-    y_vals = np.linspace(-1, 1, upsample_factor)
-    
-    # Perform 2D quadratic interpolation
-    interp_func = interp2d(np.arange(corr.shape[0]), np.arange(corr.shape[1]), corr_np, kind='quadratic')
-    corr_interp = interp_func(x_vals + x, y_vals + y)
-    
-    # Find peak in interpolated map
-    max_idx_interp = np.unravel_index(np.argmax(corr_interp), corr_interp.shape)
-    sub_pixel_shift = (x + x_vals[max_idx_interp[0]], y + y_vals[max_idx_interp[1]])
-    
-    return torch.tensor(sub_pixel_shift, device=device)
+    with torch.no_grad():
+        corr_np = corr.cpu().numpy()
+        
+        # Define fine grid for interpolation
+        x_vals = np.linspace(-1, 1, upsample_factor)
+        y_vals = np.linspace(-1, 1, upsample_factor)
+        
+        # Perform 2D quadratic interpolation
+        interp_func = interp2d(np.arange(corr.shape[0]), np.arange(corr.shape[1]), corr_np, kind='quadratic')
+        corr_interp = interp_func(x_vals + x, y_vals + y)
+        
+        # Find peak in interpolated map
+        max_idx_interp = np.unravel_index(np.argmax(corr_interp), corr_interp.shape)
+        sub_pixel_shift = (x + x_vals[max_idx_interp[0]], y + y_vals[max_idx_interp[1]])
+        
+        return torch.tensor(sub_pixel_shift, device=device)
 
-def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsample_factor=200, correlation_threshold=0.8):
+def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsample_factor=200, correlation_threshold=0.8, batch_size=16):
     """
     Coregister master and slave sub-apertures with sub-pixel accuracy using MPS.
     
@@ -364,57 +413,82 @@ def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsa
         step (int): Step size for patch extraction.
         upsample_factor (int): Oversampling factor for sub-pixel shifts.
         correlation_threshold (float): Minimum correlation value to accept a shift.
+        batch_size (int): Number of patches to process in each mini-batch.
     
     Returns:
         np.ndarray: Array of sub-pixel shifts for each patch.
     """
     device = torch.device('mps')
     
-    # Move data to MPS device
-    master_mps = torch.tensor(master, device=device, dtype=torch.float32)
-    slave_mps = torch.tensor(slave, device=device, dtype=torch.float32)
-    
     # Extract patches with overlap
     patches_master = view_as_windows(master, patch_size, step)
     patches_slave = view_as_windows(slave, patch_size, step)
     n_patches_y, n_patches_x = patches_master.shape[:2]
     
+    # Pre-allocate results array
+    shifts = np.zeros((n_patches_y, n_patches_x, 2))
+    
     # Convert patches to tensors and move to MPS
-    patches_master = torch.tensor(patches_master, device=device, dtype=torch.float32)
-    patches_slave = torch.tensor(patches_slave, device=device, dtype=torch.float32)
+    with torch.no_grad():  # Prevent gradient tracking for all operations
+        patches_master = torch.tensor(patches_master, device=device, dtype=torch.float32)
+        patches_slave = torch.tensor(patches_slave, device=device, dtype=torch.float32)
+        
+        # Flatten for batch processing
+        master_flat = patches_master.reshape(-1, *patch_size)
+        slave_flat = patches_slave.reshape(-1, *patch_size)
+        
+        # Delete original tensors to free memory
+        del patches_master, patches_slave
+        
+        # Get total number of patches
+        total_patches = master_flat.shape[0]
+        
+        # Process in mini-batches
+        for batch_start in range(0, total_patches, batch_size):
+            # Get current batch
+            batch_end = min(batch_start + batch_size, total_patches)
+            master_batch = master_flat[batch_start:batch_end]
+            slave_batch = slave_flat[batch_start:batch_end]
+            
+            # Compute FFTs on GPU
+            master_fft = torch.fft.fft2(master_batch, dim=(1, 2))
+            slave_fft = torch.fft.fft2(slave_batch, dim=(1, 2))
+            
+            # Cross-correlation via FFT
+            cross_corr = master_fft * torch.conj(slave_fft)
+            del master_fft, slave_fft  # Free memory
+            
+            corr_ifft = torch.fft.ifft2(cross_corr, dim=(1, 2))
+            del cross_corr  # Free memory
+            
+            corr_abs = torch.abs(corr_ifft)
+            
+            # Find integer shifts
+            max_idx = torch.argmax(corr_abs.view(batch_end - batch_start, -1), dim=1)
+            shifts_int = torch.stack(torch.unravel_index(max_idx, patch_size), dim=1) - torch.tensor(patch_size, device=device) // 2
+            
+            # Compute sub-pixel shifts for each patch in batch
+            for i in range(batch_end - batch_start):
+                idx = batch_start + i
+                y_idx, x_idx = idx // n_patches_x, idx % n_patches_x
+                
+                corr = corr_ifft[i]
+                corr_peak = corr_abs[i].max()
+                
+                if corr_peak / corr_abs[i].sum() >= correlation_threshold:  # Apply threshold
+                    shift_int = shifts_int[i].cpu().numpy()
+                    shift = sub_pixel_shift(corr, shift_int, upsample_factor)
+                    shifts[y_idx, x_idx] = shift.cpu().numpy()
+                else:
+                    shifts[y_idx, x_idx] = [0.0, 0.0]  # Reject low-correlation shifts
+            
+            # Free batch memory
+            del master_batch, slave_batch, corr_ifft, corr_abs
+        
+        # Free remaining tensors
+        del master_flat, slave_flat
     
-    # Flatten for batch processing
-    master_flat = patches_master.reshape(-1, *patch_size)
-    slave_flat = patches_slave.reshape(-1, *patch_size)
-    
-    # Compute FFTs on GPU
-    master_fft = torch.fft.fft2(master_flat, dim=(1, 2))
-    slave_fft = torch.fft.fft2(slave_flat, dim=(1, 2))
-    
-    # Cross-correlation via FFT
-    print("hi")
-    cross_corr = master_fft * torch.conj(slave_fft)
-    corr_ifft = torch.fft.ifft2(cross_corr, dim=(1, 2))
-    corr_abs = torch.abs(corr_ifft)
-    
-    # Find integer shifts
-    max_idx = torch.argmax(corr_abs.view(-1, patch_size[0] * patch_size[1]), dim=1)
-    shifts_int = torch.stack(torch.unravel_index(max_idx, patch_size), dim=1) - torch.tensor(patch_size, device=device) // 2
-    
-    # Compute sub-pixel shifts for each patch
-    shifts = torch.zeros((n_patches_y * n_patches_x, 2), device=device)
-    for idx in range(n_patches_y * n_patches_x):
-        corr = corr_ifft[idx]
-        corr_peak = corr_abs[idx].max()
-        if corr_peak / corr_abs[idx].sum() >= correlation_threshold:  # Apply threshold
-            shift_int = shifts_int[idx].cpu().numpy()
-            shifts[idx] = sub_pixel_shift(corr, shift_int, upsample_factor)
-        else:
-            shifts[idx] = torch.tensor([0.0, 0.0], device=device)  # Reject low-correlation shifts
-    
-    # Reshape shifts to match patch grid
-    shifts = shifts.reshape(n_patches_y, n_patches_x, 2)
-    return shifts.cpu().numpy()
+    return shifts
 
 def main():
     """Main function to execute the micro-motion estimation workflow."""
