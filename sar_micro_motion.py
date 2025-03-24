@@ -12,8 +12,6 @@ import json
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from scipy.interpolate import interp1d
-from multiprocessing import Pool, cpu_count
-from functools import partial
 
 # Configure logging
 logging.basicConfig(
@@ -40,21 +38,7 @@ def format_time(seconds):
     """Format time in seconds to a human-readable string."""
     return str(timedelta(seconds=int(seconds)))
 
-def process_patch_parallel(args):
-    """Helper function to process a single patch for phase cross-correlation."""
-    master_patch, slave_patch = args
-    try:
-        shift, _, _ = phase_cross_correlation(
-            master_patch,
-            slave_patch,
-            upsample_factor=64  # High upsampling for sub-pixel accuracy
-        )
-        return shift
-    except Exception as e:
-        logger.error(f"Error in parallel patch processing: {str(e)}")
-        return np.zeros(2)
-
-def process_sub_aperture_sequential(t, range_doppler, master, n_az, sub_ap_width, step_size, patch_size, step):
+def process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size, patch_size, step):
     """Helper function to process a single sub-aperture sequentially."""
     try:
         # Create mask for current sub-aperture with overlap
@@ -100,7 +84,7 @@ def process_sub_aperture_sequential(t, range_doppler, master, n_az, sub_ap_width
 def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step=64):
     """
     Generate sub-aperture images and compute shifts with overlapping sub-apertures.
-    Uses parallel processing for improved performance.
+    Uses sequential processing.
     """
     start_time = time.time()
     logger.info(f"Starting sub-aperture processing with {M} sub-apertures")
@@ -132,28 +116,10 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
     n_patches_y, n_patches_x = patches.shape[:2]
     shifts = np.zeros((M, n_patches_y, n_patches_x, 2))
     
-    # Process sub-apertures in parallel
-    logger.info("Processing sub-apertures in parallel...")
-    with Pool(processes=1) as pool:
-        # Create partial function with fixed arguments
-        process_func = partial(process_sub_aperture_sequential,
-                             range_doppler=range_doppler,
-                             master=master,
-                             n_az=n_az,
-                             sub_ap_width=sub_ap_width,
-                             step_size=step_size,
-                             patch_size=patch_size,
-                             step=step)
-        
-        # Process sub-apertures in parallel
-        results = list(tqdm(
-            pool.imap(process_func, range(M)),
-            total=M,
-            desc="Processing sub-apertures"
-        ))
-    
-    # Combine results
-    for t, result in enumerate(results):
+    # Process sub-apertures sequentially
+    logger.info("Processing sub-apertures sequentially...")
+    for t in tqdm(range(M), desc="Processing sub-apertures"):
+        result = process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size, patch_size, step)
         if result is not None:
             shifts[t] = result
     
