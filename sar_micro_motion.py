@@ -219,7 +219,7 @@ def analyze_shifts(shifts, slant_res_rg, slant_res_az, collect_duration, M):
     
     # Define time axis and sampling frequency
     dt = collect_duration / (M - 1)  # Time step between sub-apertures
-    time_axis = np.arange(M) * dt
+    time_axis = np.arange(M - 1) * dt  # Now has length M-1
     fs = 1 / dt  # Sampling frequency
     logger.info(f"Sampling frequency: {fs:.2f} Hz")
     
@@ -227,7 +227,7 @@ def analyze_shifts(shifts, slant_res_rg, slant_res_az, collect_duration, M):
     logger.info("Interpolating displacement time series...")
     
     # Increase the number of points for better frequency resolution
-    M_interp = M * 4  # 4x oversampling
+    M_interp = (M - 1) * 4  # 4x oversampling based on M-1
     time_interp = np.linspace(0, collect_duration, M_interp)
     
     # Initialize interpolated displacements array
@@ -237,6 +237,9 @@ def analyze_shifts(shifts, slant_res_rg, slant_res_az, collect_duration, M):
     for i in range(displacements.shape[1]):
         for j in range(displacements.shape[2]):
             for d in range(2):  # Range and azimuth directions
+                if len(time_axis) != len(displacements[:, i, j, d]):
+                    logger.error(f"Time axis length {len(time_axis)} != displacement length {len(displacements[:, i, j, d])}")
+                    raise ValueError("Time axis and displacement length mismatch")
                 f = interp1d(time_axis, displacements[:, i, j, d], 
                            kind='cubic', bounds_error=False, fill_value='extrapolate')
                 displacements_interp[:, i, j, d] = f(time_interp)
