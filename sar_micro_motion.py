@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import json
+import argparse
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from scipy.interpolate import interp1d
@@ -493,11 +494,42 @@ def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsa
     
     return shifts
 
+def save_results(data, filename):
+    """Save results to disk as a numpy array."""
+    logger.info(f"Saving results to {filename}")
+    np.save(filename, data)
+    logger.info(f"Results saved successfully")
+
+def load_results(filename):
+    """Load results from a numpy array file."""
+    logger.info(f"Loading results from {filename}")
+    if not os.path.exists(filename):
+        logger.error(f"File {filename} not found")
+        return None
+    try:
+        data = np.load(filename)
+        logger.info(f"Results loaded successfully. Shape: {data.shape}")
+        return data
+    except Exception as e:
+        logger.error(f"Error loading results: {str(e)}")
+        return None
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='SAR Micro-Motion Analysis')
+    parser.add_argument('--load', type=str, help='Load pre-processed data from file')
+    parser.add_argument('--save', type=str, default='sub_aperture_results.npy', 
+                        help='Filename to save processed data (default: sub_aperture_results.npy)')
+    return parser.parse_args()
+
 def main():
     """Main function to execute the micro-motion estimation workflow."""
     start_time = time.time()
     logger.info("Starting SAR micro-motion analysis")
     log_memory_usage("At start of main")
+    
+    # Parse command line arguments
+    args = parse_arguments()
     
     # Check for MPS availability
     if not torch.backends.mps.is_available():
@@ -538,16 +570,26 @@ def main():
     logger.info(f"Using {M} sub-apertures for analysis")
     logger.info(f"Expected time step between sub-apertures: {collect_duration/M:.3f} seconds")
     
-    # Step 3: Generate and process sub-aperture images with MPS acceleration
-    patch_size = (128, 128)
-    step = 64
-    upsample_factor = 200
-    shifts = generate_and_process_sub_apertures(
-        sicd_data, M, 
-        patch_size=patch_size,
-        step=step,
-        upsample_factor=upsample_factor
-    )
+    # Step 3: Generate and process sub-aperture images or load from file
+    if args.load:
+        # Load pre-processed data from file
+        shifts = load_results(args.load)
+        if shifts is None:
+            logger.error("Failed to load results, exiting")
+            sys.exit(1)
+    else:
+        # Generate and process sub-aperture images with MPS acceleration
+        patch_size = (128, 128)
+        step = 64
+        upsample_factor = 200
+        shifts = generate_and_process_sub_apertures(
+            sicd_data, M, 
+            patch_size=patch_size,
+            step=step,
+            upsample_factor=upsample_factor
+        )
+        # Save processed data
+        save_results(shifts, args.save)
     
     # Step 4: Analyze shifts to estimate displacements and frequencies
     displacements, freq_spectra, dominant_freqs = analyze_shifts(
