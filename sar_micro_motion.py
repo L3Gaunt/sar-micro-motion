@@ -134,7 +134,7 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
     
     # Process sub-apertures in parallel
     logger.info("Processing sub-apertures in parallel...")
-    with Pool(processes=cpu_count()) as pool:
+    with Pool(processes=1) as pool:
         # Create partial function with fixed arguments
         process_func = partial(process_sub_aperture_sequential,
                              range_doppler=range_doppler,
