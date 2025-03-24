@@ -276,7 +276,7 @@ def visualize_results(displacements, freq_spectra, collect_duration, M, sicd_dat
     
     # Time and frequency axes
     dt = collect_duration / (M - 1)
-    time = np.arange(M) * dt
+    time = np.arange(M-1) * dt  # Changed from np.arange(M) to np.arange(M-1)
     
     # Get the FFT length from freq_spectra
     M_interp = freq_spectra.shape[0]
