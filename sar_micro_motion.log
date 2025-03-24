@@ -1,0 +1,261 @@
+2025-03-23 18:42:14,895 - INFO - Starting SAR micro-motion analysis
+2025-03-23 18:42:14,896 - INFO - At start of main - Memory usage: 119.28 MB
+2025-03-23 18:42:14,896 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 18:42:17,647 - INFO - After reading SICD data - Memory usage: 1864.28 MB
+2025-03-23 18:42:17,647 - INFO - Resolution: 0.36m (range) x 0.41m (azimuth)
+2025-03-23 18:42:17,647 - INFO - Starting memory-efficient sub-aperture processing with 200 sub-apertures
+2025-03-23 18:42:17,647 - INFO - Before sub-aperture processing - Memory usage: 1864.28 MB
+2025-03-23 18:42:18,965 - INFO - After FFT to range-Doppler domain - Memory usage: 2737.47 MB
+2025-03-23 18:42:21,197 - INFO - After computing master image - Memory usage: 2052.75 MB
+2025-03-23 18:42:21,197 - INFO - Processing 164x167 patches
+2025-03-23 18:42:47,684 - INFO - After processing sub-aperture 1 - Memory usage: 2071.75 MB
+2025-03-23 18:43:14,705 - INFO - After processing sub-aperture 2 - Memory usage: 1282.81 MB
+2025-03-23 18:43:41,927 - INFO - After processing sub-aperture 3 - Memory usage: 1040.52 MB
+2025-03-23 18:44:09,497 - INFO - After processing sub-aperture 4 - Memory usage: 1051.66 MB
+2025-03-23 18:44:35,960 - INFO - After processing sub-aperture 5 - Memory usage: 1530.30 MB
+2025-03-23 18:45:02,256 - INFO - After processing sub-aperture 6 - Memory usage: 1527.84 MB
+2025-03-23 18:45:28,091 - INFO - After processing sub-aperture 7 - Memory usage: 1525.45 MB
+2025-03-23 18:45:54,191 - INFO - After processing sub-aperture 8 - Memory usage: 1528.09 MB
+2025-03-23 18:46:21,017 - INFO - After processing sub-aperture 9 - Memory usage: 1528.31 MB
+2025-03-23 18:46:48,109 - INFO - After processing sub-aperture 10 - Memory usage: 1528.06 MB
+2025-03-23 18:47:14,277 - INFO - After processing sub-aperture 11 - Memory usage: 1527.56 MB
+2025-03-23 18:47:40,096 - INFO - After processing sub-aperture 12 - Memory usage: 1527.12 MB
+2025-03-23 18:47:59,101 - INFO - Starting SAR micro-motion analysis
+2025-03-23 18:47:59,101 - INFO - At start of main - Memory usage: 123.23 MB
+2025-03-23 18:47:59,102 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 18:48:00,726 - INFO - After reading SICD data - Memory usage: 1867.94 MB
+2025-03-23 18:48:00,726 - INFO - Resolution: 0.36m (range) x 0.41m (azimuth)
+2025-03-23 18:48:00,726 - INFO - Starting memory-efficient sub-aperture processing with 20 sub-apertures
+2025-03-23 18:48:00,726 - INFO - Before sub-aperture processing - Memory usage: 1867.94 MB
+2025-03-23 18:48:00,726 - INFO - Computing range-Doppler transform...
+2025-03-23 18:48:01,848 - INFO - After FFT to range-Doppler domain - Memory usage: 2741.11 MB
+2025-03-23 18:48:01,848 - INFO - Computing master image from first sub-aperture...
+2025-03-23 18:48:03,770 - INFO - After computing master image - Memory usage: 3262.97 MB
+2025-03-23 18:48:03,770 - INFO - Processing 164x167 patches (27388 total)
+2025-03-23 18:48:03,770 - INFO - Using 32 threads for parallel processing
+2025-03-23 18:48:16,489 - INFO - After processing sub-aperture 1 - Memory usage: 2918.05 MB
+2025-03-23 18:48:30,237 - INFO - After processing sub-aperture 2 - Memory usage: 2875.27 MB
+2025-03-23 18:48:42,158 - INFO - Starting SAR micro-motion analysis
+2025-03-23 18:48:42,158 - INFO - At start of main - Memory usage: 119.42 MB
+2025-03-23 18:48:42,158 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 18:48:43,659 - INFO - After reading SICD data - Memory usage: 1864.34 MB
+2025-03-23 18:48:43,659 - INFO - Resolution: 0.36m (range) x 0.41m (azimuth)
+2025-03-23 18:48:43,659 - INFO - Starting memory-efficient sub-aperture processing with 5 sub-apertures
+2025-03-23 18:48:43,659 - INFO - Before sub-aperture processing - Memory usage: 1864.34 MB
+2025-03-23 18:48:43,659 - INFO - Computing range-Doppler transform...
+2025-03-23 18:48:44,817 - INFO - After FFT to range-Doppler domain - Memory usage: 2737.50 MB
+2025-03-23 18:48:44,818 - INFO - Computing master image from first sub-aperture...
+2025-03-23 18:48:46,142 - INFO - After computing master image - Memory usage: 3609.58 MB
+2025-03-23 18:48:46,142 - INFO - Processing 164x167 patches (27388 total)
+2025-03-23 18:48:46,142 - INFO - Using 32 threads for parallel processing
+2025-03-23 18:48:58,378 - INFO - After processing sub-aperture 1 - Memory usage: 4404.42 MB
+2025-03-23 18:49:11,676 - INFO - After processing sub-aperture 2 - Memory usage: 3623.62 MB
+2025-03-23 18:49:24,547 - INFO - After processing sub-aperture 3 - Memory usage: 3236.00 MB
+2025-03-23 18:49:38,952 - INFO - After processing sub-aperture 4 - Memory usage: 2766.89 MB
+2025-03-23 18:49:55,040 - INFO - After processing sub-aperture 5 - Memory usage: 2646.81 MB
+2025-03-23 18:49:55,083 - INFO - Sub-aperture processing completed in 0:01:11
+2025-03-23 18:49:55,083 - INFO - After completing all sub-apertures - Memory usage: 2649.08 MB
+2025-03-23 18:49:55,138 - INFO - Starting shift analysis
+2025-03-23 18:49:55,138 - INFO - Before shift analysis - Memory usage: 1121.66 MB
+2025-03-23 18:49:55,138 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 18:49:55,139 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 18:49:55,139 - INFO - Computing frequency spectra...
+2025-03-23 18:49:55,141 - INFO - Identifying dominant frequencies...
+2025-03-23 18:49:55,142 - INFO - Shift analysis completed in 0:00:00
+2025-03-23 18:49:55,142 - INFO - After shift analysis - Memory usage: 1124.25 MB
+2025-03-23 18:49:55,142 - INFO - Generating visualizations
+2025-03-23 18:49:58,210 - INFO - Total processing time: 0:01:16
+2025-03-23 18:49:58,210 - INFO - At end of main - Memory usage: 1239.73 MB
+2025-03-23 18:49:58,210 - INFO - SAR micro-motion analysis completed successfully
+2025-03-23 18:52:22,234 - INFO - Starting SAR micro-motion analysis
+2025-03-23 18:52:22,234 - INFO - At start of main - Memory usage: 120.23 MB
+2025-03-23 18:52:22,234 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 18:52:23,492 - INFO - After reading SICD data - Memory usage: 1865.22 MB
+2025-03-23 18:52:23,492 - INFO - Resolution: 0.36m (range) x 0.41m (azimuth)
+2025-03-23 18:52:23,492 - INFO - Starting memory-efficient sub-aperture processing with 5 sub-apertures
+2025-03-23 18:52:23,492 - INFO - Before sub-aperture processing - Memory usage: 1865.22 MB
+2025-03-23 18:52:23,492 - INFO - Computing range-Doppler transform...
+2025-03-23 18:52:24,801 - INFO - After FFT to range-Doppler domain - Memory usage: 2732.62 MB
+2025-03-23 18:52:24,801 - INFO - Computing master image from first sub-aperture...
+2025-03-23 18:52:27,052 - INFO - After computing master image - Memory usage: 2557.66 MB
+2025-03-23 18:52:27,053 - INFO - Processing 164x167 patches (27388 total)
+2025-03-23 18:52:27,053 - INFO - Using 32 threads for parallel processing
+2025-03-23 18:52:41,288 - INFO - After processing sub-aperture 1 - Memory usage: 1864.64 MB
+2025-03-23 18:52:58,094 - INFO - After processing sub-aperture 2 - Memory usage: 3060.42 MB
+2025-03-23 18:53:14,548 - INFO - After processing sub-aperture 3 - Memory usage: 2972.22 MB
+2025-03-23 18:53:31,631 - INFO - After processing sub-aperture 4 - Memory usage: 2938.95 MB
+2025-03-23 18:53:47,329 - INFO - After processing sub-aperture 5 - Memory usage: 2931.78 MB
+2025-03-23 18:53:47,368 - INFO - Sub-aperture processing completed in 0:01:23
+2025-03-23 18:53:47,368 - INFO - After completing all sub-apertures - Memory usage: 2931.67 MB
+2025-03-23 18:53:47,400 - INFO - Starting shift analysis
+2025-03-23 18:53:47,400 - INFO - Before shift analysis - Memory usage: 1162.00 MB
+2025-03-23 18:53:47,400 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 18:53:47,401 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 18:53:47,401 - INFO - Computing frequency spectra...
+2025-03-23 18:53:47,403 - INFO - Identifying dominant frequencies...
+2025-03-23 18:53:47,404 - INFO - Shift analysis completed in 0:00:00
+2025-03-23 18:53:47,404 - INFO - After shift analysis - Memory usage: 1163.73 MB
+2025-03-23 18:53:47,404 - INFO - Generating visualizations
+2025-03-23 18:53:48,029 - INFO - Saved oscillation analysis visualization to 'oscillation_analysis.png'
+2025-03-23 18:53:48,312 - INFO - Saved dominant frequency visualization to 'dominant_frequencies.png'
+2025-03-23 18:53:48,313 - INFO - Total processing time: 0:01:26
+2025-03-23 18:53:48,313 - INFO - At end of main - Memory usage: 1489.41 MB
+2025-03-23 18:53:48,313 - INFO - SAR micro-motion analysis completed successfully
+2025-03-23 19:06:58,037 - INFO - Starting SAR micro-motion analysis
+2025-03-23 19:06:58,037 - INFO - At start of main - Memory usage: 119.80 MB
+2025-03-23 19:06:58,037 - INFO - Reading metadata file: 2023-08-31-01-09-38_UMBRA-04_METADATA.json
+2025-03-23 19:06:58,037 - INFO - Collection duration: 4.34 seconds
+2025-03-23 19:06:58,037 - INFO - Resolution: 0.40m (range) x 0.46m (azimuth)
+2025-03-23 19:06:58,037 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 19:07:02,667 - INFO - After reading SICD data - Memory usage: 1800.92 MB
+2025-03-23 19:07:02,668 - INFO - Using 5 sub-apertures for analysis
+2025-03-23 19:07:02,668 - INFO - Starting memory-efficient sub-aperture processing with 5 sub-apertures
+2025-03-23 19:07:02,668 - INFO - Before sub-aperture processing - Memory usage: 1802.27 MB
+2025-03-23 19:07:02,668 - INFO - Computing range-Doppler transform...
+2025-03-23 19:07:04,839 - INFO - After FFT to range-Doppler domain - Memory usage: 2329.94 MB
+2025-03-23 19:07:04,839 - INFO - Computing master image from first sub-aperture...
+2025-03-23 19:07:07,273 - INFO - After computing master image - Memory usage: 1342.98 MB
+2025-03-23 19:07:07,273 - INFO - Processing 164x167 patches (27388 total)
+2025-03-23 19:07:07,273 - INFO - Using 32 threads for parallel processing
+2025-03-23 19:07:19,156 - INFO - After processing sub-aperture 1 - Memory usage: 2882.17 MB
+2025-03-23 19:07:31,950 - INFO - After processing sub-aperture 2 - Memory usage: 2947.72 MB
+2025-03-23 19:07:45,601 - INFO - After processing sub-aperture 3 - Memory usage: 3303.61 MB
+2025-03-23 19:07:59,629 - INFO - After processing sub-aperture 4 - Memory usage: 2575.22 MB
+2025-03-23 19:08:16,407 - INFO - After processing sub-aperture 5 - Memory usage: 2135.14 MB
+2025-03-23 19:08:16,439 - INFO - Sub-aperture processing completed in 0:01:13
+2025-03-23 19:08:16,439 - INFO - After completing all sub-apertures - Memory usage: 2137.64 MB
+2025-03-23 19:08:16,505 - INFO - Starting shift analysis
+2025-03-23 19:08:16,505 - INFO - Before shift analysis - Memory usage: 1015.06 MB
+2025-03-23 19:08:16,505 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 19:08:16,506 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 19:08:16,506 - INFO - Computing frequency spectra...
+2025-03-23 19:08:16,508 - INFO - Identifying dominant frequencies...
+2025-03-23 19:08:16,509 - INFO - Shift analysis completed in 0:00:00
+2025-03-23 19:08:16,510 - INFO - After shift analysis - Memory usage: 1017.47 MB
+2025-03-23 19:08:16,510 - INFO - Generating visualizations
+2025-03-23 19:09:02,490 - INFO - Saved oscillation analysis visualization to 'oscillation_analysis.png'
+2025-03-23 19:09:45,377 - INFO - Saved dominant frequency visualization to 'dominant_frequencies.png'
+2025-03-23 19:09:45,528 - INFO - Total processing time: 0:02:47
+2025-03-23 19:09:45,529 - INFO - At end of main - Memory usage: 769.94 MB
+2025-03-23 19:09:45,529 - INFO - SAR micro-motion analysis completed successfully
+2025-03-23 19:15:39,433 - INFO - Starting SAR micro-motion analysis
+2025-03-23 19:15:39,434 - INFO - At start of main - Memory usage: 119.30 MB
+2025-03-23 19:15:39,434 - INFO - Reading metadata file: 2023-08-31-01-09-38_UMBRA-04_METADATA.json
+2025-03-23 19:15:39,434 - INFO - Collection duration: 4.34 seconds
+2025-03-23 19:15:39,434 - INFO - Resolution: 0.40m (range) x 0.46m (azimuth)
+2025-03-23 19:15:39,434 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 19:15:41,096 - INFO - After reading SICD data - Memory usage: 1864.30 MB
+2025-03-23 19:15:41,096 - INFO - Using 5 sub-apertures for analysis
+2025-03-23 19:15:41,096 - INFO - Starting sub-aperture processing with 5 sub-apertures
+2025-03-23 19:15:41,096 - INFO - Before sub-aperture processing - Memory usage: 1864.30 MB
+2025-03-23 19:15:41,096 - INFO - Computing range-Doppler transform...
+2025-03-23 19:15:43,173 - INFO - After FFT to range-Doppler domain - Memory usage: 2141.11 MB
+2025-03-23 19:15:43,173 - INFO - Computing master image from first sub-aperture...
+2025-03-23 19:15:45,097 - INFO - After computing master image - Memory usage: 2365.69 MB
+2025-03-23 19:15:45,098 - INFO - Processing 164x167 patches (27388 total)
+2025-03-23 19:16:11,355 - INFO - After processing sub-aperture 1 - Memory usage: 2444.86 MB
+2025-03-23 19:16:38,227 - INFO - After processing sub-aperture 2 - Memory usage: 2310.81 MB
+2025-03-23 19:17:05,395 - INFO - After processing sub-aperture 3 - Memory usage: 2442.28 MB
+2025-03-23 19:17:30,976 - INFO - After processing sub-aperture 4 - Memory usage: 2441.17 MB
+2025-03-23 19:17:57,540 - INFO - After processing sub-aperture 5 - Memory usage: 2438.58 MB
+2025-03-23 19:17:57,591 - INFO - Sub-aperture processing completed in 0:02:16
+2025-03-23 19:17:57,591 - INFO - After completing all sub-apertures - Memory usage: 2440.61 MB
+2025-03-23 19:17:57,609 - INFO - Starting shift analysis
+2025-03-23 19:17:57,609 - INFO - Before shift analysis - Memory usage: 704.80 MB
+2025-03-23 19:17:57,609 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 19:17:57,610 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 19:17:57,610 - INFO - Computing frequency spectra...
+2025-03-23 19:17:57,612 - INFO - Identifying dominant frequencies...
+2025-03-23 19:17:57,613 - INFO - Shift analysis completed in 0:00:00
+2025-03-23 19:17:57,613 - INFO - After shift analysis - Memory usage: 721.69 MB
+2025-03-23 19:17:57,613 - INFO - Generating visualizations
+2025-03-23 19:18:47,849 - INFO - Saved oscillation analysis visualization to 'oscillation_analysis.png'
+2025-03-23 19:19:30,210 - INFO - Saved dominant frequency visualization to 'dominant_frequencies.png'
+2025-03-23 19:19:30,344 - INFO - Total processing time: 0:03:50
+2025-03-23 19:19:30,345 - INFO - At end of main - Memory usage: 464.14 MB
+2025-03-23 19:19:30,345 - INFO - SAR micro-motion analysis completed successfully
+2025-03-23 19:26:12,601 - INFO - Starting SAR micro-motion analysis
+2025-03-23 19:26:12,602 - INFO - At start of main - Memory usage: 120.47 MB
+2025-03-23 19:26:12,602 - INFO - Reading metadata file: 2023-08-31-01-09-38_UMBRA-04_METADATA.json
+2025-03-23 19:26:12,602 - INFO - Collection duration: 4.34 seconds
+2025-03-23 19:26:12,602 - INFO - Resolution: 0.40m (range) x 0.46m (azimuth)
+2025-03-23 19:26:12,602 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 19:26:14,943 - INFO - After reading SICD data - Memory usage: 1865.47 MB
+2025-03-23 19:26:14,943 - INFO - Using 5 sub-apertures for analysis
+2025-03-23 19:26:14,943 - INFO - Starting sub-aperture processing with 5 sub-apertures
+2025-03-23 19:26:14,943 - INFO - Before sub-aperture processing - Memory usage: 1865.47 MB
+2025-03-23 19:26:14,943 - INFO - Computing range-Doppler transform...
+2025-03-23 19:26:16,976 - INFO - After FFT to range-Doppler domain - Memory usage: 1991.20 MB
+2025-03-23 19:26:16,976 - INFO - Computing master image from first sub-aperture...
+2025-03-23 19:26:19,008 - INFO - After computing master image - Memory usage: 1856.42 MB
+2025-03-23 19:26:19,009 - INFO - Processing sub-apertures in parallel...
+2025-03-23 19:26:27,805 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:26:37,342 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:26:50,349 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:26:53,253 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:27:00,982 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:27:01,340 - INFO - Sub-aperture processing completed in 0:00:46
+2025-03-23 19:27:01,368 - INFO - After completing all sub-apertures - Memory usage: 184.39 MB
+2025-03-23 19:27:01,443 - INFO - Starting shift analysis
+2025-03-23 19:27:01,443 - INFO - Before shift analysis - Memory usage: 12.61 MB
+2025-03-23 19:27:01,443 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 19:27:01,468 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 19:27:01,468 - INFO - Interpolating displacement time series...
+2025-03-23 19:27:03,400 - INFO - Computing frequency spectra...
+2025-03-23 19:27:03,412 - INFO - Identifying dominant frequencies...
+2025-03-23 19:27:03,415 - INFO - Shift analysis completed in 0:00:01
+2025-03-23 19:27:03,415 - INFO - After shift analysis - Memory usage: 84.66 MB
+2025-03-23 19:27:03,415 - INFO - Generating visualizations
+2025-03-23 19:27:43,799 - INFO - Saved oscillation analysis visualization to 'oscillation_analysis.png'
+2025-03-23 19:28:24,451 - INFO - Saved dominant frequency visualization to 'dominant_frequencies.png'
+2025-03-23 19:28:24,480 - INFO - Total processing time: 0:02:11
+2025-03-23 19:28:24,481 - INFO - At end of main - Memory usage: 193.44 MB
+2025-03-23 19:28:24,481 - INFO - SAR micro-motion analysis completed successfully
+2025-03-23 19:50:21,690 - INFO - Starting SAR micro-motion analysis
+2025-03-23 19:50:21,690 - INFO - At start of main - Memory usage: 119.44 MB
+2025-03-23 19:50:21,691 - INFO - Reading metadata file: 2023-08-31-01-09-38_UMBRA-04_METADATA.json
+2025-03-23 19:50:21,691 - INFO - Collection duration: 4.34 seconds
+2025-03-23 19:50:21,691 - INFO - Resolution: 0.40m (range) x 0.46m (azimuth)
+2025-03-23 19:50:21,691 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 19:50:26,443 - INFO - After reading SICD data - Memory usage: 1864.47 MB
+2025-03-23 19:50:26,443 - INFO - Using 5 sub-apertures for analysis
+2025-03-23 19:50:26,443 - INFO - Starting sub-aperture processing with 5 sub-apertures
+2025-03-23 19:50:26,443 - INFO - Before sub-aperture processing - Memory usage: 1864.47 MB
+2025-03-23 19:50:26,443 - INFO - Computing range-Doppler transform...
+2025-03-23 19:50:28,384 - INFO - After FFT to range-Doppler domain - Memory usage: 2397.62 MB
+2025-03-23 19:50:28,384 - INFO - Computing master image from first sub-aperture...
+2025-03-23 19:50:30,408 - INFO - After computing master image - Memory usage: 2285.86 MB
+2025-03-23 19:50:30,409 - INFO - Processing sub-apertures in parallel...
+2025-03-23 19:50:39,631 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:50:44,681 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:50:52,168 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:50:56,007 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:50:57,480 - ERROR - Error in parallel sub-aperture processing: daemonic processes are not allowed to have children
+2025-03-23 19:50:57,575 - INFO - Sub-aperture processing completed in 0:00:31
+2025-03-23 19:50:57,580 - INFO - After completing all sub-apertures - Memory usage: 11.16 MB
+2025-03-23 19:50:57,656 - INFO - Starting shift analysis
+2025-03-23 19:50:57,657 - INFO - Before shift analysis - Memory usage: 11.92 MB
+2025-03-23 19:50:57,657 - INFO - Converting pixel shifts to physical displacements...
+2025-03-23 19:50:57,659 - INFO - Sampling frequency: 0.92 Hz
+2025-03-23 19:50:57,659 - INFO - Interpolating displacement time series...
+2025-03-23 19:50:59,527 - INFO - Computing frequency spectra...
+2025-03-23 19:50:59,538 - INFO - Identifying dominant frequencies...
+2025-03-23 19:50:59,542 - INFO - Shift analysis completed in 0:00:01
+2025-03-23 19:50:59,542 - INFO - After shift analysis - Memory usage: 85.00 MB
+2025-03-23 19:50:59,542 - INFO - Generating visualizations
+2025-03-23 19:53:24,243 - INFO - Starting SAR micro-motion analysis
+2025-03-23 19:53:24,243 - INFO - At start of main - Memory usage: 119.52 MB
+2025-03-23 19:53:24,243 - INFO - Reading metadata file: 2023-08-31-01-09-38_UMBRA-04_METADATA.json
+2025-03-23 19:53:24,243 - INFO - Collection duration: 4.34 seconds
+2025-03-23 19:53:24,243 - INFO - Resolution: 0.40m (range) x 0.46m (azimuth)
+2025-03-23 19:53:24,243 - INFO - Reading SICD file: 2023-08-31-01-09-38_UMBRA-04_SICD.nitf
+2025-03-23 19:53:26,951 - INFO - After reading SICD data - Memory usage: 1864.52 MB
+2025-03-23 19:53:26,951 - INFO - Using 800 sub-apertures for analysis
+2025-03-23 19:53:26,951 - INFO - Expected time step between sub-apertures: 0.005 seconds
+2025-03-23 19:53:26,951 - INFO - Starting sub-aperture processing with 800 sub-apertures
+2025-03-23 19:53:26,951 - INFO - Before sub-aperture processing - Memory usage: 1864.52 MB
+2025-03-23 19:53:26,951 - INFO - Computing range-Doppler transform...
+2025-03-23 19:53:28,104 - INFO - After FFT to range-Doppler domain - Memory usage: 2737.84 MB
+2025-03-23 19:53:28,104 - INFO - Computing master image from first sub-aperture...
+2025-03-23 19:53:29,455 - INFO - After computing master image - Memory usage: 3599.80 MB
+2025-03-23 19:53:29,455 - INFO - Processing sub-apertures in parallel...
