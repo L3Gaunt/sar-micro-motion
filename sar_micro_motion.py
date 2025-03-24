@@ -12,6 +12,8 @@ import json
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from scipy.interpolate import interp1d
+import torch
+from scipy.interpolate import interp2d
 
 # Configure logging
 logging.basicConfig(
@@ -58,6 +60,8 @@ def process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size
         patches = view_as_windows(master, patch_size, step)
         slave_patches = view_as_windows(slave, patch_size, step)
         n_patches_y, n_patches_x = patches.shape[:2]
+        logger.info(f"Processing sub-aperture with {n_patches_y} x {n_patches_x} patches (height x width)")
+
         shifts = np.zeros((n_patches_y, n_patches_x, 2))
         
         # Process patches sequentially
@@ -81,54 +85,64 @@ def process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size
         logger.error(f"Error in sub-aperture processing: {str(e)}")
         return None
 
-def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step=64):
+def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step=64, upsample_factor=200):
     """
-    Generate sub-aperture images and compute shifts with overlapping sub-apertures.
-    Uses sequential processing.
+    Generate sub-apertures and compute sub-pixel shifts using a sliding master strategy.
+    
+    Args:
+        sicd_data (np.ndarray): Input SAR data (range x azimuth).
+        M (int): Number of sub-apertures.
+        patch_size (tuple): Patch size for coregistration.
+        step (int): Step size for patch extraction.
+        upsample_factor (int): Oversampling factor for sub-pixel accuracy.
+    
+    Returns:
+        np.ndarray: Accumulated sub-pixel shifts over time.
     """
     start_time = time.time()
     logger.info(f"Starting sub-aperture processing with {M} sub-apertures")
     log_memory_usage("Before sub-aperture processing")
     
-    # Compute range-Doppler transform once
-    logger.info("Computing range-Doppler transform...")
+    # Compute range-Doppler transform
     range_doppler = np.fft.fft(sicd_data, axis=1)
     n_az = sicd_data.shape[1]
+    sub_ap_width = n_az // M
+    step_size = sub_ap_width // 2  # Overlap for sliding strategy
     
-    # Calculate sub-aperture width with overlap
-    sub_ap_width = n_az // (M // 2)
-    overlap = sub_ap_width // 2
-    step_size = sub_ap_width - overlap
-    
-    log_memory_usage("After FFT to range-Doppler domain")
-
-    # Compute master image
-    logger.info("Computing master image from first sub-aperture...")
-    mask = np.zeros_like(range_doppler, dtype=complex)
-    mask[:, 0:sub_ap_width] = range_doppler[:, 0:sub_ap_width]
-    sub_ap_image = np.fft.ifft(mask, axis=1)
-    master = np.abs(sub_ap_image)
-    del mask, sub_ap_image
-    log_memory_usage("After computing master image")
-
     # Initialize shifts array
-    patches = view_as_windows(master, patch_size, step)
-    n_patches_y, n_patches_x = patches.shape[:2]
-    shifts = np.zeros((M, n_patches_y, n_patches_x, 2))
+    shifts = np.zeros((M-1, sicd_data.shape[0] // step, sicd_data.shape[1] // step, 2))
     
-    # Process sub-apertures sequentially
-    logger.info("Processing sub-apertures sequentially...")
-    for t in tqdm(range(M), desc="Processing sub-apertures"):
-        result = process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size, patch_size, step)
-        if result is not None:
-            shifts[t] = result
+    # Process consecutive sub-aperture pairs
+    for t in tqdm(range(M-1), desc="Processing sub-aperture pairs"):
+        # Master sub-aperture
+        mask_master = np.zeros_like(range_doppler, dtype=complex)
+        start_master = t * step_size
+        end_master = start_master + sub_ap_width
+        mask_master[:, start_master:end_master] = range_doppler[:, start_master:end_master]
+        master_image = np.fft.ifft(mask_master, axis=1)
+        master = np.abs(master_image)
+        
+        # Slave sub-aperture
+        mask_slave = np.zeros_like(range_doppler, dtype=complex)
+        start_slave = (t + 1) * step_size
+        end_slave = start_slave + sub_ap_width
+        mask_slave[:, start_slave:end_slave] = range_doppler[:, start_slave:end_slave]
+        slave_image = np.fft.ifft(mask_slave, axis=1)
+        slave = np.abs(slave_image)
+        
+        # Compute sub-pixel shifts using MPS
+        result = process_sub_aperture_mps(master, slave, patch_size, step, upsample_factor)
+        shifts[t] = result
+        
+        # Free memory
+        del mask_master, mask_slave, master_image, slave_image, master, slave
     
-    # Free memory
-    del range_doppler
+    # Accumulate shifts over time
+    total_shifts = np.cumsum(shifts, axis=0)
     total_time = time.time() - start_time
     logger.info(f"Sub-aperture processing completed in {format_time(total_time)}")
     log_memory_usage("After completing all sub-apertures")
-    return shifts
+    return total_shifts
 
 def analyze_shifts(shifts, slant_res_rg, slant_res_az, collect_duration, M):
     """
@@ -305,11 +319,110 @@ def visualize_results(displacements, freq_spectra, collect_duration, M, sicd_dat
     
     plt.close('all')  # Close all figures to free memory
 
+def sub_pixel_shift(corr, shift_int, upsample_factor=200):
+    """
+    Compute sub-pixel shift using 2D quadratic interpolation around the integer shift.
+    
+    Args:
+        corr (torch.Tensor): Cross-correlation map on MPS device.
+        shift_int (tuple): Integer shift (x, y).
+        upsample_factor (int): Oversampling factor for sub-pixel precision (default: 200).
+    
+    Returns:
+        torch.Tensor: Sub-pixel shift (x, y).
+    """
+    device = corr.device
+    x, y = shift_int
+    corr_np = corr.cpu().numpy()
+    
+    # Define fine grid for interpolation
+    x_vals = np.linspace(-1, 1, upsample_factor)
+    y_vals = np.linspace(-1, 1, upsample_factor)
+    
+    # Perform 2D quadratic interpolation
+    interp_func = interp2d(np.arange(corr.shape[0]), np.arange(corr.shape[1]), corr_np, kind='quadratic')
+    corr_interp = interp_func(x_vals + x, y_vals + y)
+    
+    # Find peak in interpolated map
+    max_idx_interp = np.unravel_index(np.argmax(corr_interp), corr_interp.shape)
+    sub_pixel_shift = (x + x_vals[max_idx_interp[0]], y + y_vals[max_idx_interp[1]])
+    
+    return torch.tensor(sub_pixel_shift, device=device)
+
+def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsample_factor=200, correlation_threshold=0.8):
+    """
+    Coregister master and slave sub-apertures with sub-pixel accuracy using MPS.
+    
+    Args:
+        master (np.ndarray): Master sub-aperture image.
+        slave (np.ndarray): Slave sub-aperture image.
+        patch_size (tuple): Size of patches (height, width).
+        step (int): Step size for patch extraction.
+        upsample_factor (int): Oversampling factor for sub-pixel shifts.
+        correlation_threshold (float): Minimum correlation value to accept a shift.
+    
+    Returns:
+        np.ndarray: Array of sub-pixel shifts for each patch.
+    """
+    device = torch.device('mps')
+    
+    # Move data to MPS device
+    master_mps = torch.tensor(master, device=device, dtype=torch.float32)
+    slave_mps = torch.tensor(slave, device=device, dtype=torch.float32)
+    
+    # Extract patches with overlap
+    patches_master = view_as_windows(master, patch_size, step)
+    patches_slave = view_as_windows(slave, patch_size, step)
+    n_patches_y, n_patches_x = patches_master.shape[:2]
+    
+    # Convert patches to tensors and move to MPS
+    patches_master = torch.tensor(patches_master, device=device, dtype=torch.float32)
+    patches_slave = torch.tensor(patches_slave, device=device, dtype=torch.float32)
+    
+    # Flatten for batch processing
+    master_flat = patches_master.reshape(-1, *patch_size)
+    slave_flat = patches_slave.reshape(-1, *patch_size)
+    
+    # Compute FFTs on GPU
+    master_fft = torch.fft.fft2(master_flat, dim=(1, 2))
+    slave_fft = torch.fft.fft2(slave_flat, dim=(1, 2))
+    
+    # Cross-correlation via FFT
+    print("hi")
+    cross_corr = master_fft * torch.conj(slave_fft)
+    corr_ifft = torch.fft.ifft2(cross_corr, dim=(1, 2))
+    corr_abs = torch.abs(corr_ifft)
+    
+    # Find integer shifts
+    max_idx = torch.argmax(corr_abs.view(-1, patch_size[0] * patch_size[1]), dim=1)
+    shifts_int = torch.stack(torch.unravel_index(max_idx, patch_size), dim=1) - torch.tensor(patch_size, device=device) // 2
+    
+    # Compute sub-pixel shifts for each patch
+    shifts = torch.zeros((n_patches_y * n_patches_x, 2), device=device)
+    for idx in range(n_patches_y * n_patches_x):
+        corr = corr_ifft[idx]
+        corr_peak = corr_abs[idx].max()
+        if corr_peak / corr_abs[idx].sum() >= correlation_threshold:  # Apply threshold
+            shift_int = shifts_int[idx].cpu().numpy()
+            shifts[idx] = sub_pixel_shift(corr, shift_int, upsample_factor)
+        else:
+            shifts[idx] = torch.tensor([0.0, 0.0], device=device)  # Reject low-correlation shifts
+    
+    # Reshape shifts to match patch grid
+    shifts = shifts.reshape(n_patches_y, n_patches_x, 2)
+    return shifts.cpu().numpy()
+
 def main():
     """Main function to execute the micro-motion estimation workflow."""
     start_time = time.time()
     logger.info("Starting SAR micro-motion analysis")
     log_memory_usage("At start of main")
+    
+    # Check for MPS availability
+    if not torch.backends.mps.is_available():
+        logger.error("MPS (Metal Performance Shaders) is not available on this system")
+        sys.exit(1)
+    logger.info("MPS is available, using GPU acceleration")
     
     # Step 1: Read the metadata file
     metadata_file = "2023-08-31-01-09-38_UMBRA-04_METADATA.json"
@@ -338,14 +451,22 @@ def main():
     sicd_data = reader[:, :]  # Read entire complex image (range x azimuth)
     log_memory_usage("After reading SICD data")
     
-    # Set number of sub-apertures to 800 for high-frequency detection
-    # This will give us a time step of ~0.06 seconds with overlap
-    M = 800
+    # Calculate number of sub-apertures needed for 0.06s intervals
+    desired_time_interval = 0.06  # seconds
+    M = int(collect_duration / desired_time_interval) + 1  # Add 1 to ensure we cover the full duration
     logger.info(f"Using {M} sub-apertures for analysis")
     logger.info(f"Expected time step between sub-apertures: {collect_duration/M:.3f} seconds")
     
-    # Step 3: Generate and process sub-aperture images with memory-efficient approach
-    shifts = generate_and_process_sub_apertures(sicd_data, M)
+    # Step 3: Generate and process sub-aperture images with MPS acceleration
+    patch_size = (128, 128)
+    step = 64
+    upsample_factor = 200
+    shifts = generate_and_process_sub_apertures(
+        sicd_data, M, 
+        patch_size=patch_size,
+        step=step,
+        upsample_factor=upsample_factor
+    )
     
     # Step 4: Analyze shifts to estimate displacements and frequencies
     displacements, freq_spectra, dominant_freqs = analyze_shifts(
