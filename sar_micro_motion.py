@@ -41,6 +41,20 @@ def format_time(seconds):
     """Format time in seconds to a human-readable string."""
     return str(timedelta(seconds=int(seconds)))
 
+def get_device():
+    """Get the best available computing device (CUDA > MPS > CPU)."""
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+        logger.info(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+        return device
+    elif torch.backends.mps.is_available():
+        device = torch.device('mps')
+        logger.info("Using MPS (Metal Performance Shaders) device")
+        return device
+    else:
+        logger.info("Using CPU device (no GPU acceleration available)")
+        return torch.device('cpu')
+
 def process_sub_aperture(t, range_doppler, master, n_az, sub_ap_width, step_size, patch_size, step):
     """Helper function to process a single sub-aperture sequentially."""
     try:
@@ -101,7 +115,7 @@ def extract_sub_aperture(range_doppler, start, sub_ap_width, device=None):
     # Convert to torch tensor if not already
     if not isinstance(range_doppler, torch.Tensor):
         if device is None:
-            device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+            device = get_device()
         range_doppler = torch.tensor(range_doppler, device=device, dtype=torch.complex64)
     
     with torch.no_grad():
@@ -140,7 +154,7 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
     log_memory_usage("Before sub-aperture processing")
     
     # Setup device
-    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+    device = get_device()
     
     # Compute range-Doppler transform in PyTorch
     with torch.no_grad():
@@ -167,7 +181,7 @@ def generate_and_process_sub_apertures(sicd_data, M, patch_size=(128, 128), step
         slave_np = slave.cpu().numpy()
         
         # Compute sub-pixel shifts
-        result = process_sub_aperture_mps(master_np, slave_np, patch_size, step, upsample_factor, batch_size=batch_size)
+        result = process_sub_aperture_gpu(master_np, slave_np, patch_size, step, upsample_factor, batch_size=batch_size, device=device)
         
         # Initialize shifts array if first iteration
         if shifts is None:
@@ -379,7 +393,7 @@ def sub_pixel_shift(corr, shift_int, upsample_factor=200):
     Compute sub-pixel shift using 2D quadratic interpolation around the integer shift.
     
     Args:
-        corr (torch.Tensor): Cross-correlation map on MPS device.
+        corr (torch.Tensor): Cross-correlation map on GPU device.
         shift_int (tuple): Integer shift (x, y).
         upsample_factor (int): Oversampling factor for sub-pixel precision (default: 200).
     
@@ -406,9 +420,9 @@ def sub_pixel_shift(corr, shift_int, upsample_factor=200):
         
         return torch.tensor(sub_pixel_shift, device=device)
 
-def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsample_factor=200, correlation_threshold=0.8, batch_size=16):
+def process_sub_aperture_gpu(master, slave, patch_size=(128, 128), step=64, upsample_factor=200, correlation_threshold=0.8, batch_size=16, device=None):
     """
-    Coregister master and slave sub-apertures with sub-pixel accuracy using MPS.
+    Coregister master and slave sub-apertures with sub-pixel accuracy using GPU acceleration.
     
     Args:
         master (np.ndarray): Master sub-aperture image.
@@ -418,11 +432,13 @@ def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsa
         upsample_factor (int): Oversampling factor for sub-pixel shifts.
         correlation_threshold (float): Minimum correlation value to accept a shift.
         batch_size (int): Number of patches to process in each mini-batch.
+        device (torch.device): Device to use for computation (default: None).
     
     Returns:
         np.ndarray: Array of sub-pixel shifts for each patch.
     """
-    device = torch.device('mps')
+    if device is None:
+        device = get_device()
     
     # Extract patches with overlap
     patches_master = view_as_windows(master, patch_size, step)
@@ -432,7 +448,7 @@ def process_sub_aperture_mps(master, slave, patch_size=(128, 128), step=64, upsa
     # Pre-allocate results array
     shifts = np.zeros((n_patches_y, n_patches_x, 2))
     
-    # Convert patches to tensors and move to MPS
+    # Convert patches to tensors and move to device
     with torch.no_grad():  # Prevent gradient tracking for all operations
         patches_master = torch.tensor(patches_master, device=device, dtype=torch.float32)
         patches_slave = torch.tensor(patches_slave, device=device, dtype=torch.float32)
@@ -531,11 +547,10 @@ def main():
     # Parse command line arguments
     args = parse_arguments()
     
-    # Check for MPS availability
-    if not torch.backends.mps.is_available():
-        logger.error("MPS (Metal Performance Shaders) is not available on this system")
-        sys.exit(1)
-    logger.info("MPS is available, using GPU acceleration")
+    # Check for GPU availability
+    device = get_device()
+    if device.type == 'cpu':
+        logger.warning("No GPU acceleration available. Processing might be slow.")
     
     # Step 1: Read the metadata file
     metadata_file = "2023-08-31-01-09-38_UMBRA-04_METADATA.json"
@@ -578,7 +593,7 @@ def main():
             logger.error("Failed to load results, exiting")
             sys.exit(1)
     else:
-        # Generate and process sub-aperture images with MPS acceleration
+        # Generate and process sub-aperture images with GPU acceleration
         patch_size = (128, 128)
         step = 64
         upsample_factor = 200
