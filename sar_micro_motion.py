@@ -226,7 +226,11 @@ def visualize_results(displacements, freq_spectra, collect_duration, M, sicd_dat
     # Time and frequency axes
     dt = collect_duration / (M - 1)
     time = np.arange(M) * dt
-    freq_axis = np.fft.fftfreq(M, dt)
+    
+    # Get the FFT length from freq_spectra
+    M_interp = freq_spectra.shape[0]
+    dt_interp = collect_duration / (M_interp - 1)
+    freq_axis_interp = np.fft.fftfreq(M_interp, d=dt_interp)
     
     # 1. Plot SAR image with oscillation strength overlay (range direction)
     plt.subplot(2, 2, 1)
@@ -268,10 +272,10 @@ def visualize_results(displacements, freq_spectra, collect_duration, M, sicd_dat
     plt.title('Displacement Time Series (Center Patch)')
     plt.legend()
     
-    # 4. Plot frequency spectrum for center patch
+    # 4. Plot frequency spectrum for center patch using the correct FFT size
     plt.subplot(2, 2, 4)
-    plt.plot(freq_axis[:M//2], np.abs(freq_spectra[:M//2, i, j, 0]), label='Range')
-    plt.plot(freq_axis[:M//2], np.abs(freq_spectra[:M//2, i, j, 1]), label='Azimuth')
+    plt.plot(freq_axis_interp[:M_interp//2], np.abs(freq_spectra[:M_interp//2, i, j, 0]), label='Range')
+    plt.plot(freq_axis_interp[:M_interp//2], np.abs(freq_spectra[:M_interp//2, i, j, 1]), label='Azimuth')
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude')
     plt.title('Frequency Spectrum (Center Patch)')
@@ -286,9 +290,9 @@ def visualize_results(displacements, freq_spectra, collect_duration, M, sicd_dat
     # Create a separate figure for dominant frequencies overlay
     plt.figure(figsize=(12, 5))
     
-    # Calculate dominant frequencies
-    dominant_freqs_rg = freq_axis[np.argmax(np.abs(freq_spectra[:, :, :, 0]), axis=0)]
-    dominant_freqs_az = freq_axis[np.argmax(np.abs(freq_spectra[:, :, :, 1]), axis=0)]
+    # Calculate dominant frequencies using the correct frequency axis
+    dominant_freqs_rg = freq_axis_interp[np.argmax(np.abs(freq_spectra[:, :, :, 0]), axis=0)]
+    dominant_freqs_az = freq_axis_interp[np.argmax(np.abs(freq_spectra[:, :, :, 1]), axis=0)]
     
     # Plot dominant frequency overlays
     plt.subplot(1, 2, 1)
